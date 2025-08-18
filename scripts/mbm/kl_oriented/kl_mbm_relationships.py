@@ -1,0 +1,21 @@
+
+from missing_imputation import moaks_shared_kl_drop_df, moaks_shared_kl_median_df
+from modules.variable_analysis import run_linear_regression
+from scripts.mbm.kl_oriented.kl_mbm_var_relationships import v00_moaks_shared_kl_drop_mbm_df, v01_moaks_shared_kl_drop_mbm_df, v00_moaks_shared_kl_median_mbm_df, v01_moaks_shared_kl_median_mbm_df
+
+v01_kl_drop = moaks_shared_kl_drop_df['V01XRKL']
+v03_kl_drop = moaks_shared_kl_drop_df['V03XRKL']
+
+v01_kl_median = moaks_shared_kl_median_df['V01XRKL']
+v03_kl_median = moaks_shared_kl_median_df['V03XRKL']
+
+_, v00_v01_kl_drop_results, v00_v01_kl_drop_coef_df = run_linear_regression(v00_moaks_shared_kl_drop_mbm_df,v01_kl_drop)
+_, v00_v03_kl_drop_results, v00_v03_kl_drop_coef_df = run_linear_regression(v00_moaks_shared_kl_drop_mbm_df,v03_kl_drop)
+_, v01_v03_kl_drop_results, v01_v03_kl_drop_coef_df = run_linear_regression(v01_moaks_shared_kl_drop_mbm_df,v03_kl_drop)
+
+_, v00_v01_kl_median_results, v00_v01_kl_median_coef_df = run_linear_regression(v00_moaks_shared_kl_median_mbm_df,v01_kl_median)
+_, v00_v03_kl_median_results, v00_v03_kl_median_coef_df = run_linear_regression(v00_moaks_shared_kl_median_mbm_df,v03_kl_median)
+_, v01_v03_kl_median_results, v01_v03_kl_median_coef_df = run_linear_regression(v01_moaks_shared_kl_median_mbm_df,v03_kl_median)
+
+
+

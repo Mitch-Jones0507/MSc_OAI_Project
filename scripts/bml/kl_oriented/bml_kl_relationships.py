@@ -1,0 +1,27 @@
+from modules.plot_data import plot_predictor_target_data
+from scripts.bml.bml_load import v00_moaks_shared_kl_bml_load
+from config import v01_kl_shared_moaks
+from modules.classes.moaks_kl_womac_dataframes import MOAKS_DataFrame
+
+v00_moaks_shared_kl_bml_load_only_df = v00_moaks_shared_kl_bml_load[['V00BMLFMLOADP','V00BMLFMLOADF','V00BMLFMLOADSUM','V00BMLFMLOADSUMNOP']].copy()
+v00_moaks_shared_kl_bml_load_only_df['V01XRKL'] = v01_kl_shared_moaks['V01XRKL']
+
+v00_moaks_shared_kl_bml_load_factors_df = v00_moaks_shared_kl_bml_load_only_df[['V00BMLFMLOADF','V01XRKL']]
+v00_moaks_shared_kl_bml_load_factors = MOAKS_DataFrame(v00_moaks_shared_kl_bml_load_factors_df)
+#bml_load_kl_factors = full_variable_analysis(v00_moaks_shared_kl_bml_load_factors)
+
+v00_moaks_shared_kl_bml_load_sum_df = v00_moaks_shared_kl_bml_load_only_df[['V00BMLFMLOADSUM','V01XRKL']]
+v00_moaks_shared_kl_bml_load_sum = MOAKS_DataFrame(v00_moaks_shared_kl_bml_load_sum_df)
+#bml_load_sum = full_variable_analysis(v01_kl_shared_moaks)
+
+v00_moaks_shared_kl_bml_load_sum_no_mbmp_df = v00_moaks_shared_kl_bml_load_only_df[['V00BMLFMLOADSUMNOP','V01XRKL']]
+v00_moaks_shared_kl_bml_load_sum_no_mbmp = MOAKS_DataFrame(v00_moaks_shared_kl_bml_load_sum_no_mbmp_df)
+
+v00_moaks_shared_kl_bml_load_pca_df = v00_moaks_shared_kl_bml_load_only_df[['V00BMLFMLOADP','V01XRKL']]
+v00_moaks_shared_kl_bml_load_pca = MOAKS_DataFrame(v00_moaks_shared_kl_bml_load_pca_df)
+#bml_load_pca = full_variable_analysis(v03_kl_shared_moaks)
+
+bml_load_factors_scatter = plot_predictor_target_data(v00_moaks_shared_kl_bml_load_factors)
+bml_load_pca_scatter = plot_predictor_target_data(v00_moaks_shared_kl_bml_load_pca)
+bml_load_sum_scatter = plot_predictor_target_data(v00_moaks_shared_kl_bml_load_sum)
+bml_load_sum_no_mbmp_scatter = plot_predictor_target_data(v00_moaks_shared_kl_bml_load_sum_no_mbmp)

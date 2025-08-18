@@ -1,0 +1,6 @@
+from modules.classes.moaks_kl_womac_dataframes import MOAKS_DataFrame
+from scripts.mbm.mbm_load import v00_moaks_shared_kl_mbms_df, v00_moaks_shared_kl_mbmn_df, v00_moaks_shared_kl_mbmp_df
+
+v00_moaks_shared_kl_mbms = MOAKS_DataFrame(v00_moaks_shared_kl_mbms_df)
+v00_moaks_shared_kl_mbmn = MOAKS_DataFrame(v00_moaks_shared_kl_mbmn_df)
+v00_moaks_shared_kl_mbmp = MOAKS_DataFrame(v00_moaks_shared_kl_mbmp_df)

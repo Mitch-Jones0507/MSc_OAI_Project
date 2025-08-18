@@ -1,0 +1,95 @@
+import numpy as np
+
+from modules.classes.moaks_kl_womac_dataframes import MOAKS_DataFrame
+from modules.p_matrices import sort_p_matrix, build_p_matrix
+from modules.variable_analysis import pca, full_regression_analysis
+from scripts.womac.womac_distribution import moaks_shared_womac_drop_df, moaks_shared_womac_median_df
+
+v01_womac_left_drop_df = moaks_shared_womac_drop_df[['V01WOMADLL','V01WOMKPL','V01WOMSTFL']]
+v03_womac_left_drop_df = moaks_shared_womac_drop_df[['V03WOMADLL', 'V03WOMKPL', 'V03WOMSTFL']]
+v01_womac_left_median_df = moaks_shared_womac_median_df[['V01WOMADLL', 'V01WOMKPL', 'V01WOMSTFL']]
+v03_womac_left_median_df = moaks_shared_womac_median_df[['V03WOMADLL', 'V03WOMKPL', 'V03WOMSTFL']]
+
+v01_womac_right_drop_df = moaks_shared_womac_drop_df[['V01WOMADLR','V01WOMKPR','V01WOMSTFR']]
+v03_womac_right_drop_df = moaks_shared_womac_drop_df[['V03WOMADLR', 'V03WOMKPR', 'V03WOMSTFR']]
+v01_womac_right_median_df = moaks_shared_womac_median_df[['V01WOMADLR', 'V01WOMKPR', 'V01WOMSTFR']]
+v03_womac_right_median_df = moaks_shared_womac_median_df[['V03WOMADLR', 'V03WOMKPR', 'V03WOMSTFR']]
+
+v01_womac_left_drop_reduced_df, v01_womac_left_drop_model, _ = pca(v01_womac_left_drop_df,components = 3)
+
+v01_womac_left_drop_pc_variance = v01_womac_left_drop_model.explained_variance_
+v01_womac_left_drop_pc_variance_ratio = v01_womac_left_drop_model.explained_variance_ratio_
+v01_womac_left_drop_pc_loadings = v01_womac_left_drop_model.components_.T * np.sqrt(v01_womac_left_drop_model.explained_variance_)
+
+v03_womac_left_drop_reduced_df, v03_womac_left_drop_model, _ = pca(v03_womac_left_drop_df, components = 3)
+
+v03_womac_left_drop_pc_variance = v03_womac_left_drop_model.explained_variance_
+v03_womac_left_drop_pc_variance_ratio = v03_womac_left_drop_model.explained_variance_ratio_
+v03_womac_left_drop_pc_loadings = v03_womac_left_drop_model.components_.T * np.sqrt(v03_womac_left_drop_model.explained_variance_)
+
+v01_womac_left_median_reduced_df, v01_womac_left_median_model, _ = pca(v01_womac_left_median_df, components = 3)
+
+v01_womac_left_median_pc_variance = v01_womac_left_median_model.explained_variance_
+v01_womac_left_median_pc_variance_ratio = v01_womac_left_median_model.explained_variance_ratio_
+v01_womac_left_median_pc_loadings = v01_womac_left_median_model.components_.T * np.sqrt(v01_womac_left_median_model.explained_variance_)
+
+v03_womac_left_median_reduced_df, v03_womac_left_median_model, _ = pca(v03_womac_left_median_df, components = 3)
+
+v03_womac_left_median_pc_variance = v03_womac_left_median_model.explained_variance_
+v03_womac_left_median_pc_variance_ratio = v03_womac_left_median_model.explained_variance_ratio_
+v03_womac_left_median_pc_loadings = v03_womac_left_median_model.components_.T * np.sqrt(v03_womac_left_median_model.explained_variance_)
+
+
+v01_womac_right_drop_reduced_df, v01_womac_right_drop_model, _ = pca(v01_womac_right_drop_df,components = 3)
+
+v01_womac_right_drop_pc_variance = v01_womac_right_drop_model.explained_variance_
+v01_womac_right_drop_pc_variance_ratio = v01_womac_right_drop_model.explained_variance_ratio_
+v01_womac_right_drop_pc_loadings = v01_womac_right_drop_model.components_.T * np.sqrt(v01_womac_right_drop_model.explained_variance_)
+
+v03_womac_right_drop_reduced_df, v03_womac_right_drop_model, _ = pca(v03_womac_right_drop_df, components = 3)
+
+v03_womac_right_drop_pc_variance = v03_womac_right_drop_model.explained_variance_
+v03_womac_right_drop_pc_variance_ratio = v03_womac_right_drop_model.explained_variance_ratio_
+v03_womac_right_drop_pc_loadings = v03_womac_right_drop_model.components_.T * np.sqrt(v03_womac_right_drop_model.explained_variance_)
+
+v01_womac_right_median_reduced_df, v01_womac_right_median_model, _ = pca(v01_womac_right_median_df, components = 3)
+
+v01_womac_right_median_pc_variance = v01_womac_right_median_model.explained_variance_
+v01_womac_right_median_pc_variance_ratio = v01_womac_right_median_model.explained_variance_ratio_
+v01_womac_right_median_pc_loadings = v01_womac_right_median_model.components_.T * np.sqrt(v01_womac_right_median_model.explained_variance_)
+
+v03_womac_right_median_reduced_df, v03_womac_right_median_model, _ = pca(v03_womac_right_median_df, components = 3)
+
+v03_womac_right_median_pc_variance = v03_womac_right_median_model.explained_variance_
+v03_womac_right_median_pc_variance_ratio = v03_womac_right_median_model.explained_variance_ratio_
+v03_womac_right_median_pc_loadings = v03_womac_right_median_model.components_.T * np.sqrt(v03_womac_right_median_model.explained_variance_)
+
+v01_womac_left_drop = MOAKS_DataFrame(v01_womac_left_drop_df)
+v03_womac_left_drop = MOAKS_DataFrame(v03_womac_left_drop_df)
+v01_womac_right_drop = MOAKS_DataFrame(v01_womac_right_drop_df)
+v03_womac_right_drop = MOAKS_DataFrame(v03_womac_right_drop_df)
+
+v01_womac_left_median = MOAKS_DataFrame(v01_womac_left_median_df)
+v03_womac_left_median = MOAKS_DataFrame(v03_womac_left_median_df)
+v01_womac_right_median = MOAKS_DataFrame(v01_womac_right_median_df)
+v03_womac_right_median = MOAKS_DataFrame(v03_womac_right_median_df)
+
+v01_womac_left_drop_regression_summary = full_regression_analysis(v01_womac_left_drop)
+v03_womac_left_drop_regression_summary = full_regression_analysis(v03_womac_left_drop)
+v01_womac_right_drop_regression_summary = full_regression_analysis(v01_womac_right_drop)
+v03_womac_right_drop_regression_summary = full_regression_analysis(v03_womac_right_drop)
+
+v01_womac_left_drop_p_matrix = sort_p_matrix(build_p_matrix(v01_womac_left_drop_regression_summary))
+v03_womac_left_drop_p_matrix = sort_p_matrix(build_p_matrix(v03_womac_left_drop_regression_summary))
+v01_womac_right_drop_p_matrix = sort_p_matrix(build_p_matrix(v01_womac_right_drop_regression_summary))
+v03_womac_right_drop_p_matrix = sort_p_matrix(build_p_matrix(v03_womac_right_drop_regression_summary))
+
+v01_womac_left_median_regression_summary = full_regression_analysis(v01_womac_left_median)
+v03_womac_left_median_regression_summary = full_regression_analysis(v03_womac_left_median)
+v01_womac_right_median_regression_summary = full_regression_analysis(v01_womac_right_median)
+v03_womac_right_median_regression_summary = full_regression_analysis(v03_womac_right_median)
+
+v01_womac_left_median_p_matrix = sort_p_matrix(build_p_matrix(v01_womac_left_median_regression_summary))
+v03_womac_left_median_p_matrix = sort_p_matrix(build_p_matrix(v03_womac_left_median_regression_summary))
+v01_womac_right_median_p_matrix = sort_p_matrix(build_p_matrix(v01_womac_right_median_regression_summary))
+v03_womac_right_median_p_matrix = sort_p_matrix(build_p_matrix(v03_womac_right_median_regression_summary))
