@@ -1,30 +1,36 @@
 import pandas as pd
 import numpy as np
+import os
 from modules.classes.moaks_kl_womac_dataframes import MOAKS_DataFrame, KL_DataFrame, WOMAC_DataFrame
 from modules.classes.oai_dataframe import OAI_DataFrame
 from modules.handle_data import handle_mbm_within_grades
+
+# ========= Setting OS ========== #
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(base_dir, 'oai_data')
 
 # ========== Initialising OAI data ========== #
 # df = pd.Dataframe()
 
 # -- baseline MOAKS dataset -- #
-v00_moaks_df = pd.read_sas("oai_data/kmri_sq_moaks_bicl00.sas7bdat")
+v00_moaks_df = pd.read_sas(os.path.join(data_dir, 'kmri_sq_moaks_bicl00.sas7bdat'))
 # -- 12-month MOAKS dataset -- #
-v01_moaks_df = pd.read_sas("oai_data/kmri_sq_moaks_bicl01.sas7bdat")
+v01_moaks_df = pd.read_sas(os.path.join(data_dir, 'kmri_sq_moaks_bicl01.sas7bdat'))
 
 # -- baseline K-L dataset -- #
-v00_kl_df = pd.read_sas("oai_data/kxr_sq_bu00.sas7bdat")
+v00_kl_df = pd.read_sas(os.path.join(data_dir, 'kxr_sq_bu00.sas7bdat'))
 # -- 12-month K-L dataset -- #
-v01_kl_df = pd.read_sas("oai_data/kxr_sq_bu01.sas7bdat")
+v01_kl_df = pd.read_sas(os.path.join(data_dir, 'kxr_sq_bu01.sas7bdat'))
 # -- 24-month K-L dataset -- #
-v03_kl_df = pd.read_sas("oai_data/kxr_sq_bu03.sas7bdat")
+v03_kl_df = pd.read_sas(os.path.join(data_dir, 'kxr_sq_bu03.sas7bdat'))
 # -- 72-month K-L dataset --#
-v05_kl_df = pd.read_sas("oai_data/kxr_sq_bu05.sas7bdat")
+v05_kl_df = pd.read_sas(os.path.join(data_dir, 'kxr_sq_bu05.sas7bdat'))
 
 # -- 12-month WOMAC dataset -- #
-v01_womac_df = pd.read_sas("oai_data/allclinical01.sas7bdat")
+v01_womac_df = pd.read_sas(os.path.join(data_dir, 'allclinical01.sas7bdat'))
 # -- 24-month WOMAC dataset -- #
-v03_womac_df = pd.read_sas("oai_data/allclinical03.sas7bdat")
+v03_womac_df = pd.read_sas(os.path.join(data_dir, 'allclinical03.sas7bdat'))
 
 # ========== Instantiating DataFrame objects ========== #
 # Superclass: OAI_DataFrame from modules.classes.oai_dataframe

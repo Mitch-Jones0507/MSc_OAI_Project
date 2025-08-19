@@ -1,6 +1,5 @@
-
-from missing_imputation import moaks_shared_womac_drop_df, moaks_shared_womac_median_df
-from modules.variable_analysis import run_multivariate_linear_regression
+from modules.variable_analysis import run_multivariate_linear_regression, run_multivariate_pls
+from scripts.womac.womac_relationships import moaks_shared_womac_drop_df
 
 moaks_shared_womac_drop_left_df = moaks_shared_womac_drop_df[moaks_shared_womac_drop_df['SIDE']==1]
 moaks_shared_womac_drop_right_df = moaks_shared_womac_drop_df[moaks_shared_womac_drop_df['SIDE']==2]
@@ -11,12 +10,60 @@ v01_womac_drop_left_mbm_columns = moaks_shared_womac_drop_left_df[[column for co
 v00_womac_drop_right_mbm_columns = moaks_shared_womac_drop_right_df[[column for column in moaks_shared_womac_drop_right_df.columns if 'V00MBM' in column]]
 v01_womac_drop_right_mbm_columns = moaks_shared_womac_drop_right_df[[column for column in moaks_shared_womac_drop_right_df.columns if 'V01MBM' in column]]
 
-v01_womac_drop_left_womac_columns = moaks_shared_womac_drop_left_df[['V01WOMADLL','V01WOMKPL','V01WOMSTFL']]
-v03_womac_drop_left_womac_columns = moaks_shared_womac_drop_left_df[['V03WOMADLL','V03WOMKPL','V03WOMSTFL']]
+v01_womac_drop_left_womac_columns = moaks_shared_womac_drop_left_df[['V01WOMADLL','V01WOMSTFL']]
+v03_womac_drop_left_womac_columns = moaks_shared_womac_drop_left_df[['V03WOMADLL','V03WOMSTFL']]
+womac_drop_left_womac_change_columns = moaks_shared_womac_drop_left_df[['ΔWOMADLL','ΔWOMSTFL']]
 
-v01_womac_drop_right_womac_columns = moaks_shared_womac_drop_right_df[['V01WOMADLR','V01WOMKPR','V01WOMSTFR']]
-v03_womac_drop_right_womac_columns = moaks_shared_womac_drop_right_df[['V03WOMADLR','V03WOMKPR','V03WOMSTFR']]
+v01_womac_drop_left_pc_columns = moaks_shared_womac_drop_left_df[['V01LPC1','V01LPC2']]
+v03_womac_drop_left_pc_columns = moaks_shared_womac_drop_left_df[['V03LPC1','V03LPC2']]
+womac_drop_left_pc_change_columns = moaks_shared_womac_drop_left_df[['ΔLPC1','ΔLPC2']]
 
-_, v00_v01_womac_drop_results, v00_v01_womac_p_matrix = run_multivariate_linear_regression(v00_womac_drop_left_mbm_columns,v01_womac_drop_left_womac_columns)
-_, v00_v03_womac_drop_results, v00_v03_womac_p_matrix = run_multivariate_linear_regression(v00_womac_drop_left_mbm_columns,v03_womac_drop_left_womac_columns)
-_, v01_v03_womac_drop_results, v01_v03_womac_p_matrix = run_multivariate_linear_regression(v01_womac_drop_left_mbm_columns,v03_womac_drop_left_womac_columns)
+v01_womac_drop_right_womac_columns = moaks_shared_womac_drop_right_df[['V01WOMADLR','V01WOMSTFR']]
+v03_womac_drop_right_womac_columns = moaks_shared_womac_drop_right_df[['V03WOMADLR','V03WOMSTFR']]
+womac_drop_right_womac_change_columns = moaks_shared_womac_drop_right_df[['ΔWOMADLR','ΔWOMSTFR']]
+
+v01_womac_drop_right_pc_columns = moaks_shared_womac_drop_right_df[['V01RPC1','V01RPC2']]
+v03_womac_drop_right_pc_columns = moaks_shared_womac_drop_right_df[['V03RPC1','V03RPC2']]
+womac_drop_right_pc_change_columns = moaks_shared_womac_drop_right_df[['ΔRPC1','ΔRPC2']]
+
+# ========== Analyse WOMAC vector through multivariate linear regression ========= #
+
+_, v00_v01_womac_left_drop_results, v00_v01_womac_left_p_matrix = run_multivariate_linear_regression(v00_womac_drop_left_mbm_columns, v01_womac_drop_left_womac_columns)
+_, v00_v03_womac_left_drop_results, v00_v03_womac_left_p_matrix = run_multivariate_linear_regression(v00_womac_drop_left_mbm_columns, v03_womac_drop_left_womac_columns)
+_, v01_v03_womac_left_drop_results, v01_v03_womac_left_p_matrix = run_multivariate_linear_regression(v01_womac_drop_left_mbm_columns, v03_womac_drop_left_womac_columns)
+_, v00_womac_left_drop_change_results, v00_womac_left_change_p_matrix = run_multivariate_linear_regression(v00_womac_drop_left_mbm_columns, womac_drop_left_womac_change_columns)
+_, v01_womac_left_drop_change_results, v01_womac_left_change_p_matrix = run_multivariate_linear_regression(v01_womac_drop_left_mbm_columns, womac_drop_left_womac_change_columns)
+
+_, v00_v01_womac_right_drop_results, v00_v01_womac_right_p_matrix = run_multivariate_linear_regression(v00_womac_drop_right_mbm_columns, v01_womac_drop_right_womac_columns)
+_, v00_v03_womac_right_drop_results, v00_v03_womac_right_p_matrix = run_multivariate_linear_regression(v00_womac_drop_right_mbm_columns, v03_womac_drop_right_womac_columns)
+_, v01_v03_womac_right_drop_results, v01_v03_womac_right_p_matrix = run_multivariate_linear_regression(v01_womac_drop_right_mbm_columns, v03_womac_drop_right_womac_columns)
+_, v00_womac_right_drop_change_results, v00_womac_right_change_p_matrix = run_multivariate_linear_regression(v00_womac_drop_right_mbm_columns, womac_drop_right_womac_change_columns)
+_, v01_womac_right_drop_change_results, v01_womac_right_change_p_matrix = run_multivariate_linear_regression(v01_womac_drop_right_mbm_columns, womac_drop_right_womac_change_columns)
+
+_, v00_v01_womac_left_drop_pc_results, v00_v01_womac_left_pc_p_matrix = run_multivariate_linear_regression(v00_womac_drop_left_mbm_columns, v01_womac_drop_left_pc_columns)
+_, v00_v03_womac_left_drop_pc_results, v00_v03_womac_left_pc_p_matrix = run_multivariate_linear_regression(v00_womac_drop_left_mbm_columns, v03_womac_drop_left_pc_columns)
+_, v01_v03_womac_left_drop_pc_results, v01_v03_womac_left_pc_p_matrix = run_multivariate_linear_regression(v01_womac_drop_left_mbm_columns, v03_womac_drop_left_pc_columns)
+_, v00_womac_left_drop_change_pc_results, v00_womac_left_change_pc_p_matrix = run_multivariate_linear_regression(v00_womac_drop_left_mbm_columns, womac_drop_left_pc_change_columns)
+_, v01_womac_left_drop_change_pc_results, v01_womac_left_change_pc_p_matrix = run_multivariate_linear_regression(v01_womac_drop_left_mbm_columns, womac_drop_left_pc_change_columns)
+
+_, v00_v01_womac_right_drop_pc_results, v00_v01_womac_right_pc_p_matrix = run_multivariate_linear_regression(v00_womac_drop_right_mbm_columns, v01_womac_drop_right_pc_columns)
+_, v00_v03_womac_right_drop_pc_results, v00_v03_womac_right_pc_p_matrix = run_multivariate_linear_regression(v00_womac_drop_right_mbm_columns, v03_womac_drop_right_pc_columns)
+_, v01_v03_womac_right_drop_pc_results, v01_v03_womac_right_pc_p_matrix = run_multivariate_linear_regression(v01_womac_drop_right_mbm_columns, v03_womac_drop_right_pc_columns)
+_, v00_womac_right_drop_change_pc_results, v00_womac_right_change_pc_p_matrix = run_multivariate_linear_regression(v00_womac_drop_right_mbm_columns, womac_drop_right_pc_change_columns)
+_, v01_womac_right_drop_change_pc_results, v01_womac_right_change_pc_p_matrix = run_multivariate_linear_regression(v01_womac_drop_right_mbm_columns, womac_drop_right_pc_change_columns)
+
+# ========== Analyse WOMAC vector through partial least squares (PLS) ========= #
+
+_, v00_v01_womac_left_drop_pls_results, v00_v01_womac_left_pls_coef_matrix, v00_v01_womac_left_pls_constructs = run_multivariate_pls(v00_womac_drop_left_mbm_columns, v01_womac_drop_left_womac_columns)
+_, v00_v03_womac_left_drop_pls_results, v00_v03_womac_left_pls_coef_matrix, v00_v03_womac_left_pls_constructs = run_multivariate_pls(v00_womac_drop_left_mbm_columns, v03_womac_drop_left_womac_columns)
+_, v01_v03_womac_left_drop_pls_results, v01_v03_womac_left_pls_coef_matrix, v01_v03_womac_left_pls_constructs = run_multivariate_pls(v01_womac_drop_left_mbm_columns, v03_womac_drop_left_womac_columns)
+_, v00_womac_left_drop_change_pls_results, v00_womac_left_change_pls_coef_matrix, v00_womac_left_change_pls_constructs = run_multivariate_pls(v00_womac_drop_left_mbm_columns, womac_drop_left_womac_change_columns)
+_, v01_womac_left_drop_change_pls_results, v01_womac_left_change_pls_coef_matrix, v01_womac_left_change_pls_constructs = run_multivariate_pls(v01_womac_drop_left_mbm_columns, womac_drop_left_womac_change_columns)
+
+_, v00_v01_womac_right_drop_pls_results, v00_v01_womac_right_pls_coef_matrix, v00_v01_womac_right_pls_constructs = run_multivariate_pls(v00_womac_drop_right_mbm_columns, v01_womac_drop_right_womac_columns)
+_, v00_v03_womac_right_drop_pls_results, v00_v03_womac_right_pls_coef_matrix, v00_v03_womac_right_pls_constructs = run_multivariate_pls(v00_womac_drop_right_mbm_columns, v03_womac_drop_right_womac_columns)
+_, v01_v03_womac_right_drop_pls_results, v01_v03_womac_right_pls_coef_matrix, v01_v03_womac_right_pls_constructs = run_multivariate_pls(v01_womac_drop_right_mbm_columns, v03_womac_drop_right_womac_columns)
+_, v00_womac_right_drop_change_pls_results, v00_womac_right_change_pls_coef_matrix, v00_womac_right_change_pls_constructs = run_multivariate_pls(v00_womac_drop_right_mbm_columns, womac_drop_right_womac_change_columns)
+_, v01_womac_right_drop_change_pls_results, v01_womac_right_change_pls_coef_matrix, v01_womac_right_change_pls_constructs = run_multivariate_pls(v01_womac_drop_right_mbm_columns, womac_drop_right_womac_change_columns)
+
+

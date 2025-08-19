@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from itertools import combinations
+from sklearn.cross_decomposition import PLSRegression
 from sklearn.preprocessing import StandardScaler
 from factor_analyzer import FactorAnalyzer
 from sklearn.decomposition import PCA
@@ -211,3 +212,65 @@ def run_multivariate_linear_regression(X: pd.DataFrame, Y: pd.DataFrame, test_si
     }
 
     return model, results, coef_df_full
+
+def run_multivariate_pls(X: pd.DataFrame, Y: pd.DataFrame,
+                         n_components: int = 2,
+                         test_size: float = 0.2,
+                         random_state: int = 42):
+
+    combined = pd.concat([X, Y], axis=1)
+    combined_clean = combined.dropna(axis=0, how='any')
+    X_clean = combined_clean[X.columns].reset_index(drop=True)
+    Y_clean = combined_clean[Y.columns].reset_index(drop=True)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        X_clean, Y_clean, test_size=test_size, random_state=random_state
+    )
+
+    n_components_safe = min(n_components, X_train.shape[0] - 1, X_train.shape[1], Y_train.shape[1])
+
+    model = PLSRegression(n_components=n_components_safe, scale=True)
+    model.fit(X_train, Y_train)
+
+    Y_pred = model.predict(X_test)
+
+    r2_scores = {}
+    rmse_scores = {}
+    for i, col in enumerate(Y.columns):
+        r2_scores[col] = r2_score(Y_test[col], Y_pred[:, i])
+        rmse_scores[col] = np.sqrt(mean_squared_error(Y_test[col], Y_pred[:, i]))
+
+    W = model.x_weights_
+    P = model.x_loadings_
+    C = model.y_loadings_
+    coef_scaled = W @ np.linalg.pinv(P.T @ W) @ C.T  # coefficients in standardized space
+
+    X_mean = X_clean.mean()
+    X_std = X_clean.std()
+    Y_mean = Y_clean.mean()
+    Y_std = Y_clean.std()
+
+    coef_unscaled = coef_scaled * Y_std.values[None, :] / X_std.values[:, None]
+    intercepts = Y_mean.values - X_mean.values @ coef_unscaled
+
+    coef_list = []
+    for i, col in enumerate(Y.columns):
+        coef_df = pd.DataFrame({
+            "Feature": ["Intercept"] + X.columns.tolist(),
+            "Coefficient": [intercepts[i]] + coef_unscaled[:, i].tolist(),
+            "Target": col
+        })
+        coef_list.append(coef_df)
+
+    coef_df_full = pd.concat(coef_list, ignore_index=True)
+
+    X_latent_df = pd.DataFrame(model.x_scores_, columns=[f'PLS Component {i + 1}' for i in range(n_components_safe)],
+                               index=X_train.index)
+
+    results = {
+        "R2": r2_scores,
+        "RMSE": rmse_scores,
+        "n_components": n_components_safe
+    }
+
+    return model, results, coef_df_full, X_latent_df

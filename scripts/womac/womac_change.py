@@ -1,50 +1,58 @@
 import pandas as pd
 from config import moaks_shared_womac
+from missing_imputation import moaks_shared_womac_drop_df, moaks_shared_womac_median_df
 from modules.classes.oai_dataframe import OAI_DataFrame
-from modules.plot_data import plot_predictor_target_data
 from modules.variable_analysis import align_to_index
 
-v01_moaks_shared_womac_wm_df = moaks_shared_womac[['ID','READPRJ','SIDE','V01WOMKPL','V01WOMKPR','V01WOMTSL','V01WOMTSR']]
-v03_moaks_shared_womac_wm_df = moaks_shared_womac[['ID','READPRJ','SIDE','V03WOMKPL','V03WOMKPR','V03WOMTSL','V03WOMTSR']]
+v01_moaks_shared_womac_wm_df = moaks_shared_womac_drop_df[['ID','READPRJ','SIDE','V01WOMKPL','V01WOMKPR','V01WOMADLL','V01WOMADLR','V01WOMSTFL','V01WOMSTFR']]
+v03_moaks_shared_womac_wm_df = moaks_shared_womac_drop_df[['ID','READPRJ','SIDE','V03WOMKPL','V03WOMKPR','V03WOMADLL','V03WOMADLR','V03WOMSTFL','V03WOMSTFR']]
 
-ΔWMKPR = v03_moaks_shared_womac_wm_df['V03WOMKPR'] - v01_moaks_shared_womac_wm_df['V01WOMKPR']
-ΔWMKPL = v03_moaks_shared_womac_wm_df['V03WOMKPL'] - v01_moaks_shared_womac_wm_df['V01WOMKPL']
+ΔWOMADLL = v03_moaks_shared_womac_wm_df['V03WOMADLL'] - v01_moaks_shared_womac_wm_df['V01WOMADLL']
+ΔWOMADLR = v03_moaks_shared_womac_wm_df['V03WOMADLR'] - v01_moaks_shared_womac_wm_df['V01WOMADLR']
 
-ΔWMTSR = v03_moaks_shared_womac_wm_df['V03WOMTSR'] - v01_moaks_shared_womac_wm_df['V01WOMTSR']
-ΔWMTSL = v03_moaks_shared_womac_wm_df['V03WOMTSL'] - v01_moaks_shared_womac_wm_df['V01WOMTSL']
-ΔWMTS = ΔWMTSR + ΔWMTSL
+ΔWOMKPL = v03_moaks_shared_womac_wm_df['V03WOMKPL'] - v01_moaks_shared_womac_wm_df['V01WOMKPL']
+ΔWOMKPR = v03_moaks_shared_womac_wm_df['V03WOMKPR'] - v01_moaks_shared_womac_wm_df['V01WOMKPR']
 
-mcid_pain = 5
-mcid_total = 10
-mcid_total_both_knee = 20
+ΔWOMSTFL = v03_moaks_shared_womac_wm_df['V03WOMSTFL'] - v01_moaks_shared_womac_wm_df['V01WOMSTFL']
+ΔWOMSTFR = v03_moaks_shared_womac_wm_df['V03WOMSTFL'] - v01_moaks_shared_womac_wm_df['V01WOMSTFL']
 
-WMPPRGR = ΔWMKPR.apply(lambda score: 'Improved' if score <= -mcid_pain else 'Progressor' if score >= mcid_pain else 'Non-Progressor')
-WMPPRGL = ΔWMKPL.apply(lambda score: 'Improved' if score <= -mcid_pain else 'Progressor' if score >= mcid_pain else 'Non-Progressor')
+womac_left_drop_disability_mcid = ΔWOMADLL.std() * 0.5
+womac_right_drop_disability_mcid = ΔWOMADLR.std() * 0.5
+womac_left_drop_pain_mcid = ΔWOMKPL.std() *0.5
+womac_right_drop_pain_mcid = ΔWOMKPR.std() * 0.5
+womac_left_drop_stiffness_mcid = ΔWOMSTFL.std() * 0.5
+womac_left_drop_stiffness_mcid = ΔWOMSTFR.std() * 0.5
 
-WMPRGR = ΔWMTSR.apply(lambda score: 'Improved' if score <= -mcid_total else 'Progressor' if score >= mcid_total else 'Non-Progressor')
-WMPRGL = ΔWMTSL.apply(lambda score: 'Improved' if score <= -mcid_total else 'Progressor' if score >= mcid_total else 'Non-Progressor')
+WOMADLLPRG = ΔWOMADLL.apply(lambda score: 'Improved' if score <= -womac_left_drop_disability_mcid else 'Progressor' if score >= womac_left_drop_disability_mcid else 'Non-Progressor')
+WOMADLRPRG = ΔWOMADLR.apply(lambda score: 'Improved' if score <= -womac_right_drop_disability_mcid else 'Progressor' if score >= womac_right_drop_disability_mcid else 'Non-Progressor')
 
-WMPRG = ΔWMTS.apply(lambda score: 'Improved' if score <= -mcid_total_both_knee else 'Progressor' if score >= mcid_total_both_knee else 'Non-Progressor')
+WOMKPLPRG = ΔWOMKPL.apply(lambda score: 'Improved' if score <= -womac_left_drop_pain_mcid else 'Progressor' if score >= womac_left_drop_pain_mcid else 'Non-Progressor')
+WOMKPRPRG = ΔWOMKPR.apply(lambda score: 'Improved' if score <= -womac_right_drop_pain_mcid else 'Progressor' if score >= womac_right_drop_pain_mcid else 'Non-Progressor')
+
+WOMSTFLPRG = ΔWOMKPL.apply(lambda score: 'Improved' if score <= -womac_left_drop_stiffness_mcid else 'Progressor' if score >= womac_left_drop_stiffness_mcid else 'Non-Progressor')
+WOMSTFRPRG = ΔWOMKPL.apply(lambda score: 'Improved' if score <= -womac_left_drop_stiffness_mcid else 'Progressor' if score >= womac_left_drop_stiffness_mcid else 'Non-Progressor')
 
 index = moaks_shared_womac[['ID','READPRJ','SIDE']].sort_values(by=['ID','READPRJ','SIDE']).reset_index(drop=True)
 
 wm_change_womac_df = pd.DataFrame({
-    'ΔWMKPR': ΔWMKPR,
-    'ΔWMKPL': ΔWMKPL,
-    'ΔWMTSR': ΔWMTSR,
-    'ΔWMTSL': ΔWMTSL,
-    'ΔWMTS': ΔWMTS,
-    'WMPPRGR': WMPPRGR,
-    'WMPPRGL': WMPPRGL,
-    'WMPRGR': WMPRGR,
-    'WMPRGL': WMPRGL,
-    'WMPRG': WMPRG,
+    'ΔWOMKPR': ΔWOMKPR,
+    'ΔWOMKPL': ΔWOMKPL,
+    'ΔWOMADLL': ΔWOMADLL,
+    'ΔWOMADLR': ΔWOMADLR,
+    'ΔWOMSTFL': ΔWOMSTFL,
+    'ΔWOMSTFR': ΔWOMSTFR,
+    'WOMKPLPRG': WOMKPLPRG,
+    'WOMKPRPRG': WOMKPRPRG,
+    'WOMADLLPRG': WOMADLLPRG,
+    'WOMADLRPRG': WOMADLRPRG,
+    'WOMSTFLPRG': WOMSTFLPRG,
+    'WOMSTFRPRG': WOMSTFRPRG,
 })
 
 wm_change_womac_df = align_to_index(index, wm_change_womac_df)
 
 # -- merge by ID, READPRJ, and SIDE -- #
-wm_change_womac_df = moaks_shared_womac[['ID', 'READPRJ', 'SIDE']].merge(
+wm_change_womac_df = moaks_shared_womac_drop_df[['ID', 'READPRJ', 'SIDE']].merge(
     wm_change_womac_df,
     left_index=True,
     right_index=True,
