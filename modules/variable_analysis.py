@@ -2,13 +2,14 @@ import pandas as pd
 import numpy as np
 from itertools import combinations
 from sklearn.cross_decomposition import PLSRegression
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from factor_analyzer import FactorAnalyzer
 from sklearn.decomposition import PCA
 from modules.classes.moaks_kl_womac_dataframes import MOAKS_DataFrame
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, LassoCV, MultiTaskLassoCV
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.pipeline import make_pipeline
 import statsmodels.api as sm
 
 scaler = StandardScaler()
@@ -178,7 +179,10 @@ def run_linear_regression(X: pd.DataFrame, y: pd.Series, test_size: float = 0.2,
 
     return model, results, coef_df
 
-def run_multivariate_linear_regression(X: pd.DataFrame, Y: pd.DataFrame, test_size: float = 0.2, random_state: int = 42):
+def run_multiple_linear_regression(X: pd.DataFrame, Y, test_size: float = 0.2, random_state: int = 42):
+
+    if isinstance(Y, pd.Series):
+        Y = Y.to_frame(name=Y.name or "Target")
 
     X_train, X_test, Y_train, Y_test = train_test_split(
         X, Y, test_size=test_size, random_state=random_state
@@ -213,10 +217,19 @@ def run_multivariate_linear_regression(X: pd.DataFrame, Y: pd.DataFrame, test_si
 
     return model, results, coef_df_full
 
-def run_multivariate_pls(X: pd.DataFrame, Y: pd.DataFrame,
-                         n_components: int = 2,
-                         test_size: float = 0.2,
-                         random_state: int = 42):
+def create_transformed_features(X: pd.DataFrame, degree: int = 2, interaction_only: bool = False):
+    poly = PolynomialFeatures(degree=degree, interaction_only=interaction_only, include_bias=False)
+    X_poly_array = poly.fit_transform(X)
+    feature_names = poly.get_feature_names_out(X.columns)
+    return pd.DataFrame(X_poly_array, columns=feature_names, index=X.index)
+
+def run_multiple_pls(X: pd.DataFrame, Y,
+                     n_components: int = 2,
+                     test_size: float = 0.2,
+                     random_state: int = 42):
+
+    if isinstance(Y, pd.Series):
+        Y = Y.to_frame(name=Y.name or "Target")
 
     combined = pd.concat([X, Y], axis=1)
     combined_clean = combined.dropna(axis=0, how='any')
@@ -243,7 +256,7 @@ def run_multivariate_pls(X: pd.DataFrame, Y: pd.DataFrame,
     W = model.x_weights_
     P = model.x_loadings_
     C = model.y_loadings_
-    coef_scaled = W @ np.linalg.pinv(P.T @ W) @ C.T  # coefficients in standardized space
+    coef_scaled = W @ np.linalg.pinv(P.T @ W) @ C.T
 
     X_mean = X_clean.mean()
     X_std = X_clean.std()
@@ -274,3 +287,54 @@ def run_multivariate_pls(X: pd.DataFrame, Y: pd.DataFrame,
     }
 
     return model, results, coef_df_full, X_latent_df
+
+def run_lasso_regression(X: pd.DataFrame, Y: pd.DataFrame,
+                        test_size: float = 0.2,
+                        random_state: int = 42,
+                        alphas=np.logspace(-2, 2, 30)):
+
+    if isinstance(Y, pd.Series):
+        Y = Y.to_frame(name=Y.name or "Target")
+
+    combined = pd.concat([X, Y], axis=1)
+    combined_clean = combined.dropna(axis=0, how='any')
+    X_clean = combined_clean[X.columns].reset_index(drop=True)
+    Y_clean = combined_clean[Y.columns].reset_index(drop=True)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        X_clean, Y_clean, test_size=test_size, random_state=random_state
+    )
+
+    model = make_pipeline(
+        StandardScaler(),
+        MultiTaskLassoCV(alphas=alphas, cv=5, random_state=random_state, max_iter=20000)
+    )
+    model.fit(X_train, Y_train)
+
+    Y_pred = model.predict(X_test)
+
+    r2_scores = {col: r2_score(Y_test[col], Y_pred[:, i]) for i, col in enumerate(Y.columns)}
+    rmse_scores = {col: mean_squared_error(Y_test[col], Y_pred[:, i])**0.5 for i, col in enumerate(Y.columns)}
+
+    lasso_model = model.named_steps['multitasklassocv']
+
+    coef_matrix = lasso_model.coef_.T
+
+    coef_df = pd.DataFrame(coef_matrix, columns=Y.columns, index=X.columns).reset_index()
+    coef_df = coef_df.melt(id_vars='index', var_name='Target', value_name='Coefficient').rename(
+        columns={'index': 'Feature'})
+
+    intercept_df = pd.DataFrame({
+        'Feature': ['Intercept'] * Y.shape[1],
+        'Target': Y.columns.tolist(),
+        'Coefficient': lasso_model.intercept_.tolist()
+    })
+
+    coef_df_full = pd.concat([intercept_df, coef_df], ignore_index=True)
+
+    results = {
+        "R2": r2_scores,
+        "RMSE": rmse_scores
+    }
+
+    return model, results, coef_df_full
