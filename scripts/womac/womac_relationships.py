@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from modules.classes.moaks_kl_womac_dataframes import MOAKS_DataFrame
 from modules.p_matrices import sort_p_matrix, build_p_matrix
 from modules.variable_analysis import pca, full_regression_analysis
@@ -49,6 +50,22 @@ v03_womac_left_median_pc_variance = v03_womac_left_median_model.explained_varian
 v03_womac_left_median_pc_variance_ratio = v03_womac_left_median_model.explained_variance_ratio_
 v03_womac_left_median_pc_loadings = v03_womac_left_median_model.components_.T * np.sqrt(v03_womac_left_median_model.explained_variance_)
 
+v01_womac_left_pc_df = pd.DataFrame({
+    'PC': [f'PC{i+1}' for i in range(len(v01_womac_left_drop_pc_variance))],
+    'Variance': v01_womac_left_drop_pc_variance,
+    'Proportion of Total': v01_womac_left_drop_pc_variance_ratio
+})
+
+v01_womac_left_pc_loadings_df = pd.DataFrame(v01_womac_left_drop_pc_loadings,index=v01_womac_left_drop_df.columns.to_list(),columns=[f'PC{i+1}' for i in range(len(v01_womac_left_drop_pc_variance))])
+
+v03_womac_left_pc_df = pd.DataFrame({
+    'PC': [f'PC{i+1}' for i in range(len(v03_womac_left_drop_pc_variance))],
+    'Variance': v03_womac_left_drop_pc_variance,
+    'Proportion of Total': v03_womac_left_drop_pc_variance_ratio
+})
+
+v03_womac_left_pc_loadings_df = pd.DataFrame(v03_womac_left_drop_pc_loadings,index=v03_womac_left_drop_df.columns.to_list(),columns=[f'PC{i+1}' for i in range(len(v03_womac_left_drop_pc_variance))])
+
 v01_womac_right_drop_reduced_df, v01_womac_right_drop_model, _ = pca(v01_womac_right_drop_df,components = 3)
 
 v01_womac_right_drop_pc_variance = v01_womac_right_drop_model.explained_variance_
@@ -78,6 +95,23 @@ v03_womac_right_median_reduced_df, v03_womac_right_median_model, _ = pca(v03_wom
 v03_womac_right_median_pc_variance = v03_womac_right_median_model.explained_variance_
 v03_womac_right_median_pc_variance_ratio = v03_womac_right_median_model.explained_variance_ratio_
 v03_womac_right_median_pc_loadings = v03_womac_right_median_model.components_.T * np.sqrt(v03_womac_right_median_model.explained_variance_)
+
+v01_womac_right_pc_df = pd.DataFrame({
+    'PC': [f'PC{i+1}' for i in range(len(v01_womac_right_drop_pc_variance))],
+    'Variance': v01_womac_right_drop_pc_variance,
+    'Proportion of Total': v01_womac_right_drop_pc_variance_ratio
+})
+
+v01_womac_right_pc_loadings_df = pd.DataFrame(v01_womac_right_drop_pc_loadings,index=v01_womac_right_drop_df.columns.to_list(),columns=[f'PC{i+1}' for i in range(len(v01_womac_right_drop_pc_variance))])
+
+v03_womac_right_pc_df = pd.DataFrame({
+    'PC': [f'PC{i+1}' for i in range(len(v03_womac_right_drop_pc_variance))],
+    'Variance': v03_womac_right_drop_pc_variance,
+    'Proportion of Total': v01_womac_right_drop_pc_variance_ratio
+})
+
+v03_womac_right_pc_loadings_df = pd.DataFrame(v03_womac_right_drop_pc_loadings,index=v03_womac_right_drop_df.columns.to_list(),columns=[f'PC{i+1}' for i in range(len(v03_womac_right_drop_pc_variance))])
+
 
 v01_womac_left_drop = MOAKS_DataFrame(v01_womac_left_drop_df)
 v03_womac_left_drop = MOAKS_DataFrame(v03_womac_left_drop_df)

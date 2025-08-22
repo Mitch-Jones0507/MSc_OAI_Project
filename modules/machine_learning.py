@@ -1,11 +1,13 @@
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, label_binarize
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.metrics import classification_report, confusion_matrix, r2_score, mean_squared_error, mean_absolute_error
+from sklearn.metrics import classification_report, confusion_matrix, r2_score, mean_squared_error, mean_absolute_error, \
+classification_report, roc_curve, auc
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.inspection import permutation_importance
 from sklearn.multioutput import RegressorChain
 from xgboost import XGBClassifier, XGBRegressor
+import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 
@@ -104,15 +106,12 @@ def run_xgb_classifier(X: pd.DataFrame, y: pd.Series,
                        subsample: float = 0.85,
                        colsample_bytree: float = 0.85):
 
-    # Encode target
     y_encoded = y.astype('category').cat.codes
 
-    # Split data
     X_train, X_test, y_train, y_test = train_test_split(
         X, y_encoded, test_size=test_size, random_state=random_state, stratify=y_encoded
     )
 
-    # Base XGBoost model with fixed hyperparameters
     model = XGBClassifier(
         objective="multi:softmax",
         num_class=len(y_encoded.unique()),
@@ -126,25 +125,20 @@ def run_xgb_classifier(X: pd.DataFrame, y: pd.Series,
         random_state=random_state
     )
 
-    # Fit model
     model.fit(X_train, y_train)
 
-    # Predictions
     y_pred = model.predict(X_test)
 
-    # Metrics
     class_report = classification_report(y_test, y_pred, output_dict=True)
 
     all_classes = sorted(y_encoded.unique())
     conf_matrix = confusion_matrix(y_test, y_pred, labels=all_classes)
 
-    # Gain importance
     gain_importance = pd.DataFrame({
         'Feature': X.columns,
         'GainImportance': model.feature_importances_
     }).sort_values(by='GainImportance', ascending=False)
 
-    # Permutation importance
     perm_importance = permutation_importance(model, X_test, y_test,
                                              n_repeats=10, random_state=random_state)
     perm_df = pd.DataFrame({
@@ -153,7 +147,6 @@ def run_xgb_classifier(X: pd.DataFrame, y: pd.Series,
         'PermImportance_std': perm_importance.importances_std
     }).sort_values(by='PermImportance', ascending=False)
 
-    # Merge feature importance
     feature_df = gain_importance.merge(perm_df, on='Feature')
 
     metrics = {
@@ -162,6 +155,87 @@ def run_xgb_classifier(X: pd.DataFrame, y: pd.Series,
     }
 
     return model, metrics, feature_df
+
+def run_xgboost_with_threshold(X, y, threshold=0.5, test_size=0.2, random_state=42):
+
+    # --- Convert string labels to integers if necessary ---
+    if y.dtype == 'O' or y.dtype.name.startswith('category'):
+        unique_labels = sorted(y.unique())
+        label_map = {v: i for i, v in enumerate(unique_labels)}
+        y_numeric = y.map(label_map)
+    else:
+        y_numeric = y
+
+    # --- Train/Test Split ---
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y_numeric, test_size=test_size, random_state=random_state, stratify=y_numeric
+    )
+
+    # --- Fit XGBoost ---
+    model = XGBClassifier(
+        use_label_encoder=False,
+        eval_metric="mlogloss",
+        random_state=random_state
+    )
+    model.fit(X_train, y_train)
+
+    # --- Feature importance ---
+    coef_df = pd.DataFrame({
+        "Feature": X.columns,
+        "Importance": model.feature_importances_
+    }).sort_values(by="Importance", ascending=False).reset_index(drop=True)
+
+    # --- Classification report ---
+    y_pred = model.predict(X_test)
+    report_dict = classification_report(y_test, y_pred, output_dict=True)
+
+    # --- ROC for multi-class ---
+    classes = np.unique(y_numeric)
+    if len(classes) == 2:
+        # Binary case: apply threshold
+        y_proba = model.predict_proba(X_test)[:, 1]
+        y_pred_thresh = (y_proba >= threshold).astype(int)
+        fpr, tpr, _ = roc_curve(y_test, y_proba)
+        roc_auc = auc(fpr, tpr)
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=fpr, y=tpr, mode="lines", name=f"ROC (AUC={roc_auc:.2f})"))
+        fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="Chance", line=dict(dash="dash")))
+        fig.update_layout(title="ROC Curve", xaxis_title="False Positive Rate", yaxis_title="True Positive Rate")
+
+    else:
+        # Multi-class case: One-vs-Rest, macro and micro
+        y_test_bin = label_binarize(y_test, classes=classes)
+        y_proba_bin = model.predict_proba(X_test)
+
+        # Micro-average
+        fpr_micro, tpr_micro, _ = roc_curve(y_test_bin.ravel(), y_proba_bin.ravel())
+        auc_micro = auc(fpr_micro, tpr_micro)
+
+        # Macro-average
+        aucs = []
+        fig = go.Figure()
+        for i, cls in enumerate(classes):
+            fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_proba_bin[:, i])
+            auc_cls = auc(fpr, tpr)
+            aucs.append(auc_cls)
+            fig.add_trace(go.Scatter(x=fpr, y=tpr, mode="lines", name=f"Class {cls} (AUC={auc_cls:.2f})"))
+        auc_macro = np.mean(aucs)
+
+        # Add micro-average
+        fig.add_trace(go.Scatter(x=fpr_micro, y=tpr_micro, mode="lines",
+                                 name=f"Micro-average ROC (AUC={auc_micro:.2f})", line=dict(dash="dot", width=3)))
+        # Chance line
+        fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="Chance", line=dict(dash="dash")))
+
+        fig.update_layout(
+            title=f"(Macro AUC={auc_macro:.2f})",
+            xaxis_title="False Positive Rate",
+            yaxis_title="True Positive Rate",
+        )
+
+    return coef_df, report_dict, fig
+
 
 def run_xgb_multioutput_regressor(X: pd.DataFrame, y: pd.DataFrame,
                                   test_size: float = 0.2,

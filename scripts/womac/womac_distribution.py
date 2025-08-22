@@ -1,5 +1,7 @@
 from missing_imputation import moaks_shared_womac_drop_df, moaks_shared_womac_median_df
 from modules.handle_data import handle_vectors_womac
+import plotly.express as px
+import pingouin as pg
 
 moaks_shared_womac_drop_df = moaks_shared_womac_drop_df.copy()
 moaks_shared_womac_median_df = moaks_shared_womac_median_df.copy()
@@ -34,3 +36,13 @@ womac_drop_vectors_right_change = handle_vectors_womac(moaks_shared_womac_drop_d
 womac_median_vectors_left_change = handle_vectors_womac(moaks_shared_womac_median_df, 'ΔWOMADLL','ΔWOMKPL', 'ΔWOMSTFL')
 womac_median_vectors_right_change = handle_vectors_womac(moaks_shared_womac_median_df,'ΔWOMADLR','ΔWOMKPR','ΔWOMSTFR')
 
+v01_womac_drop_vectors_left_chart = px.bar(v01_womac_drop_vectors_left,x='Vector',y='Count',log_y=True,title='12-Month WOMAC Drop Vectors (Left Knee)')
+v01_womac_drop_vectors_right_chart = px.bar(v01_womac_drop_vectors_right,x='Vector',y='Count',log_y=True,title='12-Month WOMAC Drop Vectors (Right Knee)')
+v03_womac_drop_vectors_left_chart = px.bar(v03_womac_drop_vectors_left,x='Vector',y='Count',log_y=True,title='24-Month WOMAC Drop Vectors (Left Knee)')
+v03_womac_drop_vectors_right_chart = px.bar(v03_womac_drop_vectors_right,x='Vector',y='Count',log_y=True, title='24-Month WOMAC Drop Vectors (Right Knee)')
+
+v01_columns = moaks_shared_womac_drop_df[['V01WOMADLL','V01WOMKPL','V01WOMSTFL']].dropna()
+multivariate_normality_v01 = pg.multivariate_normality(v01_columns, alpha=.05)
+
+v03_columns = moaks_shared_womac_drop_df[['V03WOMADLL','V03WOMKPL','V03WOMSTFL']].dropna()
+multivariate_normality_v03 = pg.multivariate_normality(v03_columns, alpha=.05)

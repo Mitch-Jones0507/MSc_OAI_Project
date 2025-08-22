@@ -31,20 +31,104 @@ def plot_predictor_target_data(dataframe):
     return predictor_target_scatter
 
 
-def plot_moaks_data(moaks_dataframe: MOAKS_DataFrame):
+def plot_2d_moaks_data(moaks_dataframe):
+    # Get the first two columns
+    columns = list(moaks_dataframe.columns)[:2]
 
-    columns = list(moaks_dataframe.df.columns)
-    moaks_df_counted = moaks_dataframe.df.groupby(columns).size().reset_index(name='count')
+    # Count occurrences of each combination
+    moaks_df_counted = moaks_dataframe.groupby(columns).size().reset_index(name='count')
 
-    moaks_df_scatter = px.scatter_3d(moaks_df_counted, x = columns[0], y = columns[1], z = columns[2], size = 'count',
-                                     size_max = 40, opacity = 0.8)
-    moaks_df_scatter.update_layout(scene=dict(
-        xaxis=dict(title=columns[0], showgrid = False),
-        yaxis=dict(title=columns[1], showgrid = False),
-        zaxis=dict(title=columns[2], showgrid = False),
+    # Determine title based on first character
+    first_char = columns[0][6].upper()  # adjust as needed
+
+    if first_char == "S":
+        title_text = "BML size scores across PM, PL"
+    elif first_char == "N":
+        title_text = "BML number scores across PM, PL"
+    elif first_char == "P":
+        title_text = "BML percentage scores across PM, PL"
+    else:
+        title_text = "BML scores across PM, PL"
+
+    moaks_2d_scatter = px.scatter(
+        moaks_df_counted,
+        x=columns[0],
+        y=columns[1],
+        size='count',
+        size_max=40,
+        opacity=0.8,
+        title=title_text
+    )
+
+    moaks_2d_scatter.update_layout(
+        xaxis=dict(title=columns[0][-2:], showgrid=False),
+        yaxis=dict(title=columns[1][-2:], showgrid=False)
+    )
+
+    return moaks_2d_scatter
+
+def plot_3d_moaks_data(moaks_dataframe):
+
+    columns = list(moaks_dataframe.columns)
+    moaks_df_counted = moaks_dataframe.groupby(columns).size().reset_index(name='count')
+
+    first_char = columns[0][6].upper()  # make sure uppercase
+
+    if first_char == "S":
+        title_text = "BML size scores across FMA, FMC, FMP"
+    elif first_char == "N":
+        title_text = "BML number scores across FMA, FMC, FMP"
+    elif first_char == "P":
+        title_text = "BML percentage scores across FMA, FMC, FMP"
+    else:
+        title_text = "BML scores across FMA, FMC, FMP"
+
+    # Create 3D scatter plot
+    moaks_3d_scatter = px.scatter_3d(
+        moaks_df_counted,
+        x=columns[0],
+        y=columns[1],
+        z=columns[2],
+        size='count',
+        size_max=40,
+        opacity=0.8,
+        title=title_text)
+
+    moaks_3d_scatter.update_layout(scene=dict(
+        xaxis=dict(title=columns[0][-3:], showgrid = False),
+        yaxis=dict(title=columns[1][-3:], showgrid = False),
+        zaxis=dict(title=columns[2][-3:], showgrid = False),
     ))
 
-    return moaks_df_scatter
+    return moaks_3d_scatter
+
+
+import plotly.express as px
+
+
+
+def plot_pca_3d(df, pc_columns=['PC1','PC2','PC3'], size_col=None, title="PCA 3D Scatter", point_size=2):
+    pca_scatter = px.scatter_3d(
+        df,
+        x=pc_columns[0],
+        y=pc_columns[1],
+        z=pc_columns[2],
+        size=size_col,
+        opacity=0.8,
+        title=title
+    )
+
+    if size_col is None:
+        pca_scatter.update_traces(marker=dict(size=point_size))
+
+    pca_scatter.update_layout(scene=dict(
+        xaxis=dict(title=pc_columns[0], showgrid=True),
+        yaxis=dict(title=pc_columns[1], showgrid=True),
+        zaxis=dict(title=pc_columns[2], showgrid=True),
+    ))
+
+    return pca_scatter
+
 
 def handle_regression(moaks_df: MOAKS_DataFrame, formula_df: pd.DataFrame, equation: int):
 
